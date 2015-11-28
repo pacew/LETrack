@@ -1,5 +1,6 @@
 package org.willisson.letrack;
 
+import android.content.SharedPreferences;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
 
@@ -17,6 +18,8 @@ import java.util.ArrayList;
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
 
     private GoogleMap mMap;
+	SharedPreferences prefs;
+	SharedPreferences.Editor prefs_editor;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -26,6 +29,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
+		prefs = getSharedPreferences ("ATW", MODE_PRIVATE);
+		prefs_editor = prefs.edit ();
     }
 
 
@@ -57,6 +62,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 		} else {
 			mMap.moveCamera(CameraUpdateFactory.newLatLngZoom (bostonish, 7));
 			rectOptions = null;
+			return;
 		}
 
 		for (int idx = 0; idx < hist.size (); idx++) {
@@ -70,11 +76,33 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 		Polyline polyline = mMap.addPolyline(rectOptions);
     }
 
-	ArrayList<LocLog> get_loc_history () {
-		ArrayList<LocLog> hist = new ArrayList<LocLog> ();
-		hist.add(new LocLog(new LatLng(42, -71), "here"));
-		hist.add(new LocLog(new LatLng(43, -71), "over there"));
-		hist.add (new LocLog (new LatLng (43, -70), "way over there"));
+	public ArrayList<LocLog> get_loc_history () {
+		int hr, min, idx;
+		String time, latkey, lonkey;
+        float lat, lon;
+		ArrayList<LocLog> hist;
+		LocLog node;
+
+		hist = new ArrayList<LocLog> ();
+
+		for (hr = 0; hr < 24; hr++) {
+			for (min = 0; min < 60; min++) {
+				time = hr + ":" + String.format ("%02d", min);
+				latkey = time + "lat";
+				lonkey = time + "lon";
+
+				lat = prefs.getFloat (latkey, 0);
+				lon = prefs.getFloat (lonkey, 0);
+
+				if (lat != 0 && lon != 0) {
+					hist.add (new LocLog (new LatLng (lat, lon), time));
+				}
+			}
+		}
+
+		for (idx = 0; idx < hist.size (); idx++) {
+			node = hist.get (idx);
+		}
 
 		return (hist);
 	}

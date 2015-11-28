@@ -1,10 +1,12 @@
 package org.willisson.letrack;
 
+import android.content.Intent;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
 import android.content.Context;
+import android.view.View;
 import android.widget.Toast;
 
 public class MainActivity extends AppCompatActivity {
@@ -18,6 +20,11 @@ public class MainActivity extends AppCompatActivity {
 			finish();
 		}
     }
+
+	public void to_map (View view) {
+		Intent intent = new Intent(this, MapsActivity.class);
+		startActivity(intent);
+	}
 
     public void send_toast (String text) {
 		Context context = getApplicationContext ();

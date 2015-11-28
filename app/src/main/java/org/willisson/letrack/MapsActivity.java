@@ -12,6 +12,8 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
 
+import java.util.ArrayList;
+
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
 
     private GoogleMap mMap;
@@ -38,23 +40,42 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
      */
     @Override
     public void onMapReady(GoogleMap googleMap) {
+		LocLog node;
+		PolylineOptions rectOptions;
+		ArrayList<LocLog> hist;
+
         mMap = googleMap;
 
-        LatLng ma0 = new LatLng(42, -71);
-        LatLng ma1 = new LatLng(43, -71);
-        LatLng ma2 = new LatLng(43, -70);
-        mMap.addMarker(new MarkerOptions().position(ma0).title("ma0"));
-        mMap.addMarker(new MarkerOptions().position(ma1).title("ma1"));
-        mMap.addMarker(new MarkerOptions().position(ma2).title("ma2"));
+		hist = get_loc_history ();
 
-        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(ma0, 7));
+		LatLng bostonish = new LatLng (42, -71);
 
-		PolylineOptions rectOptions = new PolylineOptions()
-			.add(ma0)
-			.add(ma1)
-			.add(ma2);
+		if (hist.size () > 0) {
+			node = hist.get (0);
+			mMap.moveCamera(CameraUpdateFactory.newLatLngZoom (node.loc, 7));
+			rectOptions = new PolylineOptions();
+		} else {
+			mMap.moveCamera(CameraUpdateFactory.newLatLngZoom (bostonish, 7));
+			rectOptions = null;
+		}
 
-		// Get back the mutable Polyline
+		for (int idx = 0; idx < hist.size (); idx++) {
+			node = hist.get (idx);
+			mMap.addMarker(new MarkerOptions().position(node.loc).title(node.tag));
+			if (rectOptions != null) {
+				rectOptions = rectOptions.add (node.loc);
+			}
+		}
+
 		Polyline polyline = mMap.addPolyline(rectOptions);
     }
+
+	ArrayList<LocLog> get_loc_history () {
+		ArrayList<LocLog> hist = new ArrayList<LocLog> ();
+		hist.add(new LocLog(new LatLng(42, -71), "here"));
+		hist.add(new LocLog(new LatLng(43, -71), "over there"));
+		hist.add (new LocLog (new LatLng (43, -70), "way over there"));
+
+		return (hist);
+	}
 }

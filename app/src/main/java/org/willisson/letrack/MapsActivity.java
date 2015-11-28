@@ -91,8 +91,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 				latkey = time + "lat";
 				lonkey = time + "lon";
 
-				lat = prefs.getFloat (latkey, 0);
-				lon = prefs.getFloat (lonkey, 0);
+				String[] log = prefs.getString(time, "0 0").split (" ");
+
+				lat = Float.parseFloat (log[0]);
+				lon = Float.parseFloat (log[1]);
 
 				if (lat != 0 && lon != 0) {
 					hist.add (new LocLog (new LatLng (lat, lon), time));

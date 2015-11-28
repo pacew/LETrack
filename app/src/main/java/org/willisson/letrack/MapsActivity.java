@@ -9,6 +9,8 @@ import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.maps.model.Polyline;
+import com.google.android.gms.maps.model.PolylineOptions;
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
 
@@ -38,9 +40,21 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
 
-        // Add a marker in Sydney and move the camera
-        LatLng sydney = new LatLng(-34, 151);
-        mMap.addMarker(new MarkerOptions().position(sydney).title("Marker in Sydney"));
-        mMap.moveCamera(CameraUpdateFactory.newLatLng(sydney));
+        LatLng ma0 = new LatLng(42, -71);
+        LatLng ma1 = new LatLng(43, -71);
+        LatLng ma2 = new LatLng(43, -70);
+        mMap.addMarker(new MarkerOptions().position(ma0).title("ma0"));
+        mMap.addMarker(new MarkerOptions().position(ma1).title("ma1"));
+        mMap.addMarker(new MarkerOptions().position(ma2).title("ma2"));
+
+        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(ma0, 7));
+
+		PolylineOptions rectOptions = new PolylineOptions()
+			.add(ma0)
+			.add(ma1)
+			.add(ma2);
+
+		// Get back the mutable Polyline
+		Polyline polyline = mMap.addPolyline(rectOptions);
     }
 }

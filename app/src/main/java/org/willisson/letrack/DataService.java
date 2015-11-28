@@ -2,6 +2,7 @@ package org.willisson.letrack;
 
 import android.app.IntentService;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.location.Location;
 import android.os.Bundle;
 import android.util.Log;
@@ -12,6 +13,9 @@ import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
 
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+
 /**
  * Created by pace on 11/28/15.
  */
@@ -20,6 +24,10 @@ public class DataService extends IntentService
                 GoogleApiClient.OnConnectionFailedListener {
     public final String TAG = "LEtrack";
     static boolean running;
+
+    SharedPreferences prefs;
+    SharedPreferences.Editor prefs_editor;
+
 
     public DataService() {
         super("DataService");
@@ -34,10 +42,12 @@ public class DataService extends IntentService
         Log.i(TAG, "starting data service");
         running = true;
 
+        prefs = getSharedPreferences("locations", MODE_PRIVATE);
+        prefs_editor = prefs.edit();
+
         loc_test();
 
         while (true) {
-            get_datapoint();
             int interval = 10; /* seconds */
 
             try {
@@ -70,7 +80,7 @@ public class DataService extends IntentService
 
         LocationRequest req = new LocationRequest();
         req.setInterval (10 * 1000);
-        req.setFastestInterval (10 * 1000);
+        req.setFastestInterval(10 * 1000);
         req.setPriority(LocationRequest.PRIORITY_LOW_POWER);
 
 
@@ -90,7 +100,16 @@ public class DataService extends IntentService
 
     @Override
     public void onLocationChanged(Location location) {
-        Log.i (TAG, "location changed " + location);
+        Calendar now = Calendar.getInstance();
+        SimpleDateFormat fmt = new SimpleDateFormat("HH:mm");
+        String hhmm = fmt.format (now.getTime ());
+
+        String val = "" + location.getLatitude() + " " + location.getLongitude();
+        Log.i (TAG, "location changed " + hhmm + " " + val);
+
+        prefs_editor.putString(hhmm, val);
+        prefs_editor.commit();
+
     }
 
     void get_datapoint() {

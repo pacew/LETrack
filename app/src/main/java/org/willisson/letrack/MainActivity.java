@@ -8,8 +8,10 @@ import com.google.android.gms.common.GoogleApiAvailability;
 import android.content.Context;
 import android.view.View;
 import android.widget.Toast;
+import android.util.Log;
 
 public class MainActivity extends AppCompatActivity {
+    public final String TAG = "LEtrack";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -33,4 +35,9 @@ public class MainActivity extends AppCompatActivity {
 		toast.show();
     }
 
+    public void start_click (View view) {
+        Log.i(TAG, "start_click");
+        Intent intent = new Intent(this, DataService.class);
+        startService (intent);
+    }
 }

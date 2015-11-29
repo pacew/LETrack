@@ -8,3 +8,4 @@ gpg -d google_maps_api_release.xml.gpg > app/src/release/res/values/google_maps_
 
 mkdir -p app/src/debug/res/values
 gpg -d google_maps_api_debug.xml.gpg > app/src/debug/res/values/google_maps_api.xml
+gpg -d keystore-passwds.gpg > keystore-passwds

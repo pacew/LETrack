@@ -1,11 +1,13 @@
 package org.willisson.letrack;
 
 import android.app.IntentService;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.location.Location;
 import android.os.Bundle;
 import android.util.Log;
+import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -77,19 +79,27 @@ public class DataService extends IntentService
     @Override
     public void onConnected (Bundle bundle) {
         Log.i(TAG, "onconnected");
+        try {
+            LocationRequest req = new LocationRequest();
+            req.setInterval(60 * 1000);
+            req.setFastestInterval(60 * 1000);
+            req.setPriority(LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY);
 
-        LocationRequest req = new LocationRequest();
-        req.setInterval (60 * 1000);
-        req.setFastestInterval(60 * 1000);
-        req.setPriority(LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY);
-
-        LocationServices.FusedLocationApi.requestLocationUpdates (mGoogleApiClient, req, this);
+            LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleApiClient, req, this);
+        } catch (Exception e) {
+            Log.i (TAG, "error starting location requests");
+            Context context = getApplicationContext ();
+            Toast toast = Toast.makeText (context,
+                    "can't get location - check permissions",
+                    Toast.LENGTH_LONG);
+            toast.show();
+        }
 
     }
 
     @Override
     public void onConnectionSuspended (int i) {
-        Log.i (TAG, "connection suspended");
+        Log.i(TAG, "connection suspended");
     }
 
     @Override

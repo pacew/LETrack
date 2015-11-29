@@ -82,6 +82,7 @@ public class DataService extends IntentService
         req.setInterval (10 * 1000);
         req.setFastestInterval(10 * 1000);
         req.setPriority(LocationRequest.PRIORITY_LOW_POWER);
+        req.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
 
 
         LocationServices.FusedLocationApi.requestLocationUpdates (mGoogleApiClient, req, this);

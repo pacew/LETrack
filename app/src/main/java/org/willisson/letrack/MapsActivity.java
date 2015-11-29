@@ -12,6 +12,7 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
+import android.util.Log;
 
 import java.util.ArrayList;
 
@@ -29,7 +30,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
-		prefs = getSharedPreferences ("ATW", MODE_PRIVATE);
+		prefs = getSharedPreferences ("locations", MODE_PRIVATE);
 		prefs_editor = prefs.edit ();
     }
 
@@ -77,7 +78,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     }
 
 	public ArrayList<LocLog> get_loc_history () {
-		int hr, min, idx;
+		int hr, min, idx, absmin, last_pt;
 		String time, latkey, lonkey;
         float lat, lon;
 		ArrayList<LocLog> hist;
@@ -85,18 +86,25 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
 		hist = new ArrayList<LocLog> ();
 
-		for (hr = 0; hr < 24; hr++) {
-			for (min = 0; min < 60; min++) {
-				time = hr + ":" + String.format ("%02d", min);
-				latkey = time + "lat";
-				lonkey = time + "lon";
+		last_pt = -15;
 
-				String[] log = prefs.getString(time, "0 0").split (" ");
+		for (absmin = 0; absmin < 60 * 24; absmin++) {
+			hr = (int) Math.floor (absmin / 60);
+			min = absmin % 60;
 
-				lat = Float.parseFloat (log[0]);
-				lon = Float.parseFloat (log[1]);
+			time = hr + ":" + String.format ("%02d", min);
 
-				if (lat != 0 && lon != 0) {
+			latkey = time + "lat";
+			lonkey = time + "lon";
+
+			String[] log = prefs.getString(time, "0 0").split (" ");
+
+			lat = Float.parseFloat (log[0]);
+			lon = Float.parseFloat (log[1]);
+
+			if (lat != 0 && lon != 0) {
+				if (absmin - last_pt >= 15) {
+					last_pt = absmin;
 					hist.add (new LocLog (new LatLng (lat, lon), time));
 				}
 			}

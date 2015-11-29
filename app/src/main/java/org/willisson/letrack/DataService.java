@@ -79,11 +79,9 @@ public class DataService extends IntentService
         Log.i(TAG, "onconnected");
 
         LocationRequest req = new LocationRequest();
-        req.setInterval (10 * 1000);
-        req.setFastestInterval(10 * 1000);
-        req.setPriority(LocationRequest.PRIORITY_LOW_POWER);
-        req.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
-
+        req.setInterval (60 * 1000);
+        req.setFastestInterval(60 * 1000);
+        req.setPriority(LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY);
 
         LocationServices.FusedLocationApi.requestLocationUpdates (mGoogleApiClient, req, this);
 
@@ -102,13 +100,13 @@ public class DataService extends IntentService
     @Override
     public void onLocationChanged(Location location) {
         Calendar now = Calendar.getInstance();
-        SimpleDateFormat fmt = new SimpleDateFormat("HH:mm");
-        String hhmm = fmt.format (now.getTime ());
+        SimpleDateFormat fmt = new SimpleDateFormat ("yyyyMMdd'T'HHmm");
+        String ts = fmt.format (now.getTime ());
 
         String val = "" + location.getLatitude() + " " + location.getLongitude();
-        Log.i (TAG, "location changed " + hhmm + " " + val);
+        Log.i (TAG, "location changed " + ts + " " + val);
 
-        prefs_editor.putString(hhmm, val);
+        prefs_editor.putString(ts, val);
         prefs_editor.commit();
 
     }

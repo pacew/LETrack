@@ -14,7 +14,9 @@ import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
 import android.util.Log;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
 
@@ -68,7 +70,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
 		for (int idx = 0; idx < hist.size (); idx++) {
 			node = hist.get (idx);
-			mMap.addMarker(new MarkerOptions().position(node.loc).title(node.tag));
+			if (node.marker || idx == hist.size () - 1) {
+				mMap.addMarker(new MarkerOptions().position(node.loc).title(node.tag));
+			}
 			if (rectOptions != null) {
 				rectOptions = rectOptions.add (node.loc);
 			}
@@ -79,10 +83,13 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
 	public ArrayList<LocLog> get_loc_history () {
 		int hr, min, idx, absmin, last_pt;
-		String time, latkey, lonkey;
+		String ts, hhmm, tag;
         float lat, lon;
 		ArrayList<LocLog> hist;
 		LocLog node;
+        Calendar now = Calendar.getInstance();
+        SimpleDateFormat fmt = new SimpleDateFormat ("yyyyMMdd'T'");
+        String date_prefix = fmt.format (now.getTime ());
 
 		hist = new ArrayList<LocLog> ();
 
@@ -92,12 +99,25 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 			hr = (int) Math.floor (absmin / 60);
 			min = absmin % 60;
 
-			time = hr + ":" + String.format ("%02d", min);
+			hhmm = String.format ("%02d", hr) + String.format ("%02d", min);
+			ts = date_prefix + hhmm;
 
-			latkey = time + "lat";
-			lonkey = time + "lon";
+			tag = "";
+			if (hr % 12 == 0) {
+				tag += "12";
+			} else {
+				tag += String.format ("%d", hr % 12);
+			}
 
-			String[] log = prefs.getString(time, "0 0").split (" ");
+			tag += ":" + String.format ("%d", min);
+
+			if (hr < 12) {
+				tag += " AM";
+			} else {
+				tag += " PM";
+			}
+
+			String[] log = prefs.getString(ts, "0 0").split (" ");
 
 			lat = Float.parseFloat (log[0]);
 			lon = Float.parseFloat (log[1]);
@@ -105,13 +125,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 			if (lat != 0 && lon != 0) {
 				if (absmin - last_pt >= 15) {
 					last_pt = absmin;
-					hist.add (new LocLog (new LatLng (lat, lon), time));
+					hist.add (new LocLog (new LatLng (lat, lon), tag, true));
+				} else {
+					hist.add (new LocLog (new LatLng (lat, lon), tag, false));
 				}
 			}
-		}
-
-		for (idx = 0; idx < hist.size (); idx++) {
-			node = hist.get (idx);
 		}
 
 		return (hist);

@@ -38,6 +38,15 @@ public class MainActivity extends AppCompatActivity {
     public void start_click (View view) {
         Log.i(TAG, "start_click");
         Intent intent = new Intent(this, DataService.class);
-        startService (intent);
+        intent.setAction ("start");
+        startService(intent);
+    }
+
+    public void stop_button_click (View view) {
+        Log.i (TAG, "stop click");
+        DataService.keep_going = false;
+        Toast toast = Toast.makeText (this,"Location tracking shutting down",
+                Toast.LENGTH_SHORT);
+        toast.show();
     }
 }

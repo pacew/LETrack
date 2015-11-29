@@ -109,7 +109,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 				tag += String.format ("%d", hr % 12);
 			}
 
-			tag += ":" + String.format ("%d", min);
+			tag += ":" + String.format ("%02d", min);
 
 			if (hr < 12) {
 				tag += " AM";

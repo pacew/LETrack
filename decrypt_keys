@@ -3,5 +3,8 @@
 gpg -d debug.keystore.gpg > ~/.android/debug.keystore
 gpg -d release.keystore.gpg > ~/.android/release.keystore
 
+mkdir -p app/src/release/res/values
 gpg -d google_maps_api_release.xml.gpg > app/src/release/res/values/google_maps_api.xml
+
+mkdir -p app/src/debug/res/values
 gpg -d google_maps_api_debug.xml.gpg > app/src/debug/res/values/google_maps_api.xml

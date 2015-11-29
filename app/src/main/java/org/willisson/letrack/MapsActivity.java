@@ -60,10 +60,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
 		if (hist.size () > 0) {
 			node = hist.get (0);
-			mMap.moveCamera(CameraUpdateFactory.newLatLngZoom (node.loc, 7));
+			mMap.moveCamera(CameraUpdateFactory.newLatLngZoom (node.loc, 12));
 			rectOptions = new PolylineOptions();
 		} else {
-			mMap.moveCamera(CameraUpdateFactory.newLatLngZoom (bostonish, 7));
+			mMap.moveCamera(CameraUpdateFactory.newLatLngZoom (bostonish, 12));
 			rectOptions = null;
 			return;
 		}

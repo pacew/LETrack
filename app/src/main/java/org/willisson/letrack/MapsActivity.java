@@ -88,13 +88,14 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 		String hhmm, tag;
         float lat, lon;
 		ArrayList<LocLog> hist;
-
+        
 		hist = new ArrayList<LocLog> ();
 
 		last_pt = -15;
 
         try {
-			String filename = "locations";
+			String filename = "locations" + MainActivity.selected_dt;
+            Log.i (TAG, "map: open file " + filename);
             FileInputStream fin = openFileInput(filename);
             BufferedReader rd = new BufferedReader(new InputStreamReader(fin));
             String row;

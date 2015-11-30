@@ -26,6 +26,7 @@ import java.util.Arrays;
 
 public class MainActivity extends AppCompatActivity {
     public final String TAG = "LEtrack";
+    public static String selected_dt;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -86,11 +87,18 @@ public class MainActivity extends AppCompatActivity {
                                     int position, long id) {
                 String val = (String) day_listview.getItemAtPosition(position);
                 Log.i(TAG, "click on " + position + " = " + val);
+
+                selected_dt = val;
             }
         });
     }
 
     public void to_map (View view) {
+        if (selected_dt == null) {
+            Log.i (TAG, "no date selected");
+            return;
+        }
+        Log.i (TAG, "show map for " + selected_dt);
         Intent intent = new Intent(this, MapsActivity.class);
         startActivity(intent);
 	}

@@ -10,6 +10,14 @@ import android.view.View;
 import android.widget.Toast;
 import android.util.Log;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.InputStreamReader;
+import java.util.Arrays;
+
 public class MainActivity extends AppCompatActivity {
     public final String TAG = "LEtrack";
 
@@ -24,8 +32,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
 	public void to_map (View view) {
-		Intent intent = new Intent(this, MapsActivity.class);
-		startActivity(intent);
+        Intent intent = new Intent(this, MapsActivity.class);
+        startActivity(intent);
 	}
 
     public void send_toast (String text) {
@@ -37,16 +45,26 @@ public class MainActivity extends AppCompatActivity {
 
     public void start_click (View view) {
         Log.i(TAG, "start_click");
-        Intent intent = new Intent(this, DataService.class);
-        intent.setAction ("start");
-        startService(intent);
+        if (false) {
+            Intent intent = new Intent(this, DataService.class);
+            intent.setAction("start");
+            startService(intent);
+        } else {
+            Intent intent = new Intent (this, DataProcess.class);
+            startService (intent);
+        }
     }
 
     public void stop_button_click (View view) {
-        Log.i (TAG, "stop click");
-        DataService.keep_going = false;
-        Toast toast = Toast.makeText (this,"Location tracking shutting down",
-                Toast.LENGTH_SHORT);
-        toast.show();
+        Log.i(TAG, "stop click");
+        if (false) {
+            DataService.keep_going = false;
+            Toast toast = Toast.makeText(this, "Location tracking shutting down",
+                    Toast.LENGTH_SHORT);
+            toast.show();
+        } else {
+            Intent intent = new Intent (this, DataProcess.class);
+            stopService(intent);
+        }
     }
 }

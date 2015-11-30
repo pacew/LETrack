@@ -39,6 +39,9 @@
             android:label="@string/title_activity_maps"></activity>
 
         <service android:name=".DataService"/>
+        <service
+            android:name=".DataProcess"
+            android:process=":letrack_data"/>
 
     </application>
 

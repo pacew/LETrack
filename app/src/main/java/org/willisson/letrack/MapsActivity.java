@@ -14,15 +14,17 @@ import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
 import android.util.Log;
 
+import java.io.BufferedReader;
+import java.io.FileInputStream;
+import java.io.InputStreamReader;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
+    static String TAG = "LEtrack";
 
     private GoogleMap mMap;
-	SharedPreferences prefs;
-	SharedPreferences.Editor prefs_editor;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -32,8 +34,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
-		prefs = getSharedPreferences ("locations", MODE_PRIVATE);
-		prefs_editor = prefs.edit ();
     }
 
 
@@ -69,13 +69,15 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 		}
 
 		for (int idx = 0; idx < hist.size (); idx++) {
-			node = hist.get (idx);
+			node = hist.get(idx);
 			if (node.marker || idx == hist.size () - 1) {
 				mMap.addMarker(new MarkerOptions().position(node.loc).title(node.tag));
 			}
 			if (rectOptions != null) {
 				rectOptions = rectOptions.add (node.loc);
-			}
+                Log.i (TAG, "add point " + node.tag + " " + node.loc.latitude + " " + node.loc.longitude);
+
+            }
 		}
 
 		Polyline polyline = mMap.addPolyline(rectOptions);
@@ -83,55 +85,62 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
 	public ArrayList<LocLog> get_loc_history () {
 		int hr, min, idx, absmin, last_pt;
-		String ts, hhmm, tag;
+		String hhmm, tag;
         float lat, lon;
 		ArrayList<LocLog> hist;
-		LocLog node;
-        Calendar now = Calendar.getInstance();
-        SimpleDateFormat fmt = new SimpleDateFormat ("yyyyMMdd'T'");
-        String date_prefix = fmt.format (now.getTime ());
 
 		hist = new ArrayList<LocLog> ();
 
 		last_pt = -15;
 
-		for (absmin = 0; absmin < 60 * 24; absmin++) {
-			hr = (int) Math.floor (absmin / 60);
-			min = absmin % 60;
+        try {
+			String filename = "locations";
+            FileInputStream fin = openFileInput(filename);
+            BufferedReader rd = new BufferedReader(new InputStreamReader(fin));
+            String row;
 
-			hhmm = String.format ("%02d", hr) + String.format ("%02d", min);
-			ts = date_prefix + hhmm;
+            while ((row = rd.readLine()) != null) {
+				String[] elts = row.split (" ");
+				String ts = elts[0];
+				lat = Float.parseFloat (elts[1]);
+				lon = Float.parseFloat(elts[2]);
 
-			tag = "";
-			if (hr % 12 == 0) {
-				tag += "12";
-			} else {
-				tag += String.format ("%d", hr % 12);
-			}
+				hhmm = ts.substring (ts.length() - 4);
+				hr = Integer.parseInt (hhmm.substring(0, 2));
+				min = Integer.parseInt (hhmm.substring (2, 4));
 
-			tag += ":" + String.format ("%02d", min);
+				absmin = hr * 60 + min;
 
-			if (hr < 12) {
-				tag += " AM";
-			} else {
-				tag += " PM";
-			}
+				Log.i (TAG, "hr "+hr + " min "+min + " lat "+lat + " lon "+lon);
 
-			String[] log = prefs.getString(ts, "0 0").split (" ");
-
-			lat = Float.parseFloat (log[0]);
-			lon = Float.parseFloat (log[1]);
-
-			if (lat != 0 && lon != 0) {
-				if (absmin - last_pt >= 15) {
-					last_pt = absmin;
-					hist.add (new LocLog (new LatLng (lat, lon), tag, true));
+				tag = "";
+				if (hr % 12 == 0) {
+					tag += "12";
 				} else {
-					hist.add (new LocLog (new LatLng (lat, lon), tag, false));
+					tag += String.format ("%d", hr % 12);
+				}
+				tag += ":" + String.format ("%02d", min);
+				if (hr < 12) {
+					tag += " AM";
+				} else {
+					tag += " PM";
+				}
+
+				if (lat != 0 && lon != 0) {
+					Boolean add_marker = false;
+					if (absmin - last_pt >= 15) {
+						last_pt = absmin;
+						add_marker = true;
+					}
+					hist.add (new LocLog(new LatLng(lat,lon),tag,add_marker));
 				}
 			}
+		} catch (Exception e) {
+			Log.i (TAG, "parse error");
+            e.printStackTrace();
 		}
-
 		return (hist);
 	}
+
+
 }

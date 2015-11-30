@@ -7,8 +7,13 @@ import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
 import android.content.Context;
 import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.Toast;
+import android.widget.ListView;
 import android.util.Log;
+
+import org.w3c.dom.DOMStringList;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
@@ -16,6 +21,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
 import java.util.Arrays;
 
 public class MainActivity extends AppCompatActivity {
@@ -24,14 +30,67 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        Log.i(TAG, "main activity create");
         setContentView(R.layout.activity_main);
-		if (GoogleApiAvailability.getInstance().isGooglePlayServicesAvailable(getApplicationContext()) != ConnectionResult.SUCCESS) {
-			send_toast("Google Play Services not found.");
-			finish();
-		}
+        if (GoogleApiAvailability.getInstance().isGooglePlayServicesAvailable(getApplicationContext()) != ConnectionResult.SUCCESS) {
+            send_toast("Google Play Services not found.");
+            finish();
+        }
+
+
     }
 
-	public void to_map (View view) {
+    @Override
+    protected void onStart() {
+        super.onStart();
+        Log.i(TAG, "mainactivity start");
+
+        make_file_list();
+    }
+
+    ListView day_listview;
+
+    void make_file_list() {
+        ArrayList<String> choices = new ArrayList<String>();
+
+        String[] files = fileList();
+        for (int i = 0; i < files.length; i++) {
+            String filename = files[i];
+            if (filename.length() < 9)
+                continue;
+            String prefix = filename.substring(0, 9);
+            String dt = filename.substring(9);
+            Log.i(TAG, "prefix " + prefix + " dt " + dt);
+            if (prefix.equals("locations") && dt.length() == 8) {
+                Log.i(TAG, "files: " + prefix + " " + dt);
+                choices.add(dt);
+            }
+        }
+        String[] choices_arr = new String[choices.size()];
+        choices_arr = choices.toArray(choices_arr);
+        Log.i(TAG, "nchoices = " + choices_arr.length);
+        for (String s : choices_arr)
+            Log.i(TAG, s);
+
+        day_listview = (ListView) findViewById(R.id.day_listview);
+
+        ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
+                android.R.layout.simple_list_item_1, android.R.id.text1, choices_arr);
+
+        day_listview.setAdapter(adapter);
+
+        day_listview.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view,
+                                    int position, long id) {
+                String val = (String) day_listview.getItemAtPosition(position);
+                Log.i(TAG, "click on " + position + " = " + val);
+            }
+        });
+    }
+
+    public void to_map (View view) {
         Intent intent = new Intent(this, MapsActivity.class);
         startActivity(intent);
 	}

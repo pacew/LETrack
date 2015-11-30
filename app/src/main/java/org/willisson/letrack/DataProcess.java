@@ -30,8 +30,8 @@ public class DataProcess extends Service
             LocationListener {
     public static String TAG = "LEtrack";
     static GoogleApiClient gapi;
-    static FileOutputStream outf;
-
+	static String filename;
+	static FileOutputStream outf;
 
     @Nullable
     @Override
@@ -64,12 +64,6 @@ public class DataProcess extends Service
                 .build();
 
         gapi.connect();
-
-        try {
-            outf = openFileOutput ("locations", MODE_PRIVATE | MODE_APPEND);
-        } catch (Exception e) {
-            Log.i (TAG, "can't create output file");
-        }
     }
 
     @Override
@@ -105,18 +99,31 @@ public class DataProcess extends Service
 
     @Override
     public void onConnectionFailed(ConnectionResult connectionResult) {
-
     }
 
     @Override
     public void onLocationChanged(Location location) {
-        Calendar now = Calendar.getInstance();
-        SimpleDateFormat fmt = new SimpleDateFormat ("yyyyMMdd'T'HHmm");
-        String ts = fmt.format (now.getTime ());
-
-        String val = ts + " " + location.getLatitude() + " " + location.getLongitude();
-        Log.i(TAG, "location changed " + val);
         try {
+			Calendar now = Calendar.getInstance();
+			SimpleDateFormat dt_fmt = new SimpleDateFormat ("yyyyMMdd");
+			SimpleDateFormat time_fmt = new SimpleDateFormat ("HHmm");
+			String dt = dt_fmt.format (now.getTime ());
+			String hhmm = time_fmt.format (now.getTime ());
+
+			String val = hhmm + " "
+				+ location.getLatitude() + " "
+				+ location.getLongitude();
+			Log.i(TAG, "location changed " + val);
+
+			String new_filename = "locations" + dt;
+
+			if (! new_filename.equals (filename)) {
+				filename = new_filename;
+				if (outf != null)
+					outf.close ();
+				outf = openFileOutput (filename, MODE_PRIVATE | MODE_APPEND);
+			}
+
             outf.write(val.getBytes("UTF-8"));
             outf.write("\n".getBytes("UTF-8"));
             outf.flush();

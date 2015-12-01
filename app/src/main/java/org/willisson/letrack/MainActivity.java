@@ -131,27 +131,15 @@ public class MainActivity extends AppCompatActivity {
 
     public void start_click (View view) {
         Log.i(TAG, "start_click");
-        if (false) {
-            Intent intent = new Intent(this, DataService.class);
-            intent.setAction("start");
-            startService(intent);
-        } else {
-            Intent intent = new Intent (this, DataProcess.class);
-            startService (intent);
-        }
+        Intent intent = new Intent (this, DataProcess.class);
+        startService (intent);
     }
 
     public void stop_button_click (View view) {
         Log.i(TAG, "stop click");
-        if (false) {
-            DataService.keep_going = false;
-            Toast toast = Toast.makeText(this, "Location tracking shutting down",
-                    Toast.LENGTH_SHORT);
-            toast.show();
-        } else {
-            Intent intent = new Intent (this, DataProcess.class);
-            stopService(intent);
-        }
+        Intent intent = new Intent (this, DataProcess.class);
+        stopService(intent);
+
     }
 
     public void hi_precision_click (View view) {

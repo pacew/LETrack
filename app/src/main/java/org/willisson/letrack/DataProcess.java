@@ -48,7 +48,7 @@ public class DataProcess extends Service
 
         Log.i(TAG, "setting foreground");
 
-        Intent notificationIntent = new Intent(this, DataService.class);
+        Intent notificationIntent = new Intent(this, DataProcess.class);
         PendingIntent pendingIntent= PendingIntent.getActivity(this, 0,
                 notificationIntent, Intent.FLAG_ACTIVITY_NEW_TASK);
 

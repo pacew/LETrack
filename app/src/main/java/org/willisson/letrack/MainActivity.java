@@ -21,8 +21,10 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.InputStreamReader;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
 
 public class MainActivity extends AppCompatActivity {
     public final String TAG = "LEtrack";
@@ -53,9 +55,16 @@ public class MainActivity extends AppCompatActivity {
     ListView day_listview;
 
     void make_file_list() {
+        SimpleDateFormat dt_fmt = new SimpleDateFormat("yyyyMMdd");
+        String today_dt = dt_fmt.format (Calendar.getInstance().getTime());
+        if (selected_dt == null)
+                selected_dt = today_dt;
+
+        int selected_slot = -1;
         ArrayList<String> choices = new ArrayList<String>();
 
         String[] files = fileList();
+        int curslot = 0;
         for (int i = 0; i < files.length; i++) {
             String filename = files[i];
             if (filename.length() < 9)
@@ -66,8 +75,15 @@ public class MainActivity extends AppCompatActivity {
             if (prefix.equals("locations") && dt.length() == 8) {
                 Log.i(TAG, "files: " + prefix + " " + dt);
                 choices.add(dt);
+
+                if (selected_dt.equals(dt))
+                    selected_slot = curslot;
+
+                curslot++;
             }
         }
+        Log.i (TAG, "selected_slot " + selected_slot);
+
         String[] choices_arr = new String[choices.size()];
         choices_arr = choices.toArray(choices_arr);
         Log.i(TAG, "nchoices = " + choices_arr.length);
@@ -77,9 +93,11 @@ public class MainActivity extends AppCompatActivity {
         day_listview = (ListView) findViewById(R.id.day_listview);
 
         ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
-                android.R.layout.simple_list_item_1, android.R.id.text1, choices_arr);
+                android.R.layout.simple_list_item_activated_1, android.R.id.text1, choices_arr);
 
         day_listview.setAdapter(adapter);
+        if (selected_slot >= 0)
+            day_listview.setItemChecked (selected_slot, true);
 
         day_listview.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override

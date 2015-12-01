@@ -20,6 +20,7 @@ import com.google.android.gms.location.LocationServices;
 import java.io.FileOutputStream;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.Date;
 
 /**
  * Created by pace on 11/29/15.
@@ -105,10 +106,11 @@ public class DataProcess extends Service
     public void onLocationChanged(Location location) {
         try {
 			Calendar now = Calendar.getInstance();
+			Date t = now.getTime();
 			SimpleDateFormat dt_fmt = new SimpleDateFormat ("yyyyMMdd");
 			SimpleDateFormat time_fmt = new SimpleDateFormat ("HHmm");
-			String dt = dt_fmt.format (now.getTime ());
-			String hhmm = time_fmt.format (now.getTime ());
+			String dt = dt_fmt.format(t);
+			String hhmm = time_fmt.format (t);
 
 			String val = hhmm + " "
 				+ location.getLatitude() + " "

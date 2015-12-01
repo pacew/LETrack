@@ -52,4 +52,13 @@
         android:choiceMode="singleChoice"
         android:listSelector="#aaaaff" />
 
+    <CheckBox
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="High Precision"
+        android:id="@+id/hi_precision_checkbox"
+        android:layout_below="@+id/textView"
+        android:layout_toEndOf="@+id/stop_button"
+        android:onClick="hi_precision_click" />
+
 </RelativeLayout>

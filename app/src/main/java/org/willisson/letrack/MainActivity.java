@@ -9,6 +9,7 @@ import android.content.Context;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.CheckBox;
 import android.widget.Toast;
 import android.widget.ListView;
 import android.util.Log;
@@ -151,5 +152,15 @@ public class MainActivity extends AppCompatActivity {
             Intent intent = new Intent (this, DataProcess.class);
             stopService(intent);
         }
+    }
+
+    public void hi_precision_click (View view) {
+        CheckBox cb = (CheckBox)findViewById (R.id.hi_precision_checkbox);
+        boolean val = cb.isChecked();
+        Log.i (TAG, "hi precision click " + val);
+
+        Intent intent = new Intent (this, DataProcess.class);
+        intent.setAction(val ? "hi_precision" : "lo_precision");
+        startService(intent);
     }
 }

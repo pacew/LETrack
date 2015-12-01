@@ -33,6 +33,7 @@ public class DataProcess extends Service
     static GoogleApiClient gapi;
 	static String filename;
 	static FileOutputStream outf;
+    static boolean connected;
 
     @Nullable
     @Override
@@ -66,6 +67,26 @@ public class DataProcess extends Service
 
         gapi.connect();
     }
+    static boolean hi_precision;
+
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        Log.i (TAG, "onstartcommand");
+        String action = intent.getAction ();
+        if (action != null && action.equals ("hi_precision")) {
+            hi_precision = true;
+        } else {
+            hi_precision = false;
+        }
+        Log.i (TAG, "hi_precision = " + hi_precision);
+
+        if (connected) {
+            Log.i (TAG, "restarting listener");
+            LocationServices.FusedLocationApi.removeLocationUpdates (gapi, this);
+            setup_listener ();
+        }
+        return super.onStartCommand(intent, flags, startId);
+    }
 
     @Override
     public void onDestroy() {
@@ -76,11 +97,20 @@ public class DataProcess extends Service
     @Override
     public void onConnected(Bundle bundle) {
         Log.i(TAG, "onconnected");
+        connected = true;
+
+        setup_listener();
+    }
+
+    void setup_listener () {
         try {
+            Log.i (TAG, "setup_listener hi_precision = " + hi_precision);
             LocationRequest req = new LocationRequest();
             req.setInterval(60 * 1000);
             req.setFastestInterval(60 * 1000);
-            req.setPriority(LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY);
+            req.setPriority(hi_precision
+                    ? LocationRequest.PRIORITY_HIGH_ACCURACY
+                    : LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY);
 
             LocationServices.FusedLocationApi.requestLocationUpdates(gapi, req, this);
         } catch (Exception e) {
@@ -90,9 +120,7 @@ public class DataProcess extends Service
                     Toast.LENGTH_LONG);
             toast.show();
         }
-
     }
-
     @Override
     public void onConnectionSuspended(int i) {
 

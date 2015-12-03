@@ -42,6 +42,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
+import java.util.Collections;
 
 public class MainActivity extends AppCompatActivity implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
     public final String TAG = "LEtrack";
@@ -59,7 +60,6 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
             send_toast("Google Play Services not found.");
             finish();
         }
-
 
 
     }
@@ -84,8 +84,8 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
                     .build();
 
         }
-        Log.i (TAG, "connecting google api client");
-		mGoogleApiClient.connect();
+        Log.i(TAG, "connecting google api client");
+        mGoogleApiClient.connect();
     }
 
     @Override
@@ -97,17 +97,20 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     }
 
     ListView day_listview;
+    ArrayList<String> file_list;
+    String[] file_list_arr;
 
     void make_file_list() {
         SimpleDateFormat dt_fmt = new SimpleDateFormat("yyyyMMdd");
-        String today_dt = dt_fmt.format (Calendar.getInstance().getTime());
+        String today_dt = dt_fmt.format(Calendar.getInstance().getTime());
         if (selected_dt == null)
-                selected_dt = today_dt;
+            selected_dt = today_dt;
 
         int selected_slot = -1;
-        ArrayList<String> choices = new ArrayList<String>();
 
         String[] files = fileList();
+        file_list = new ArrayList<String>();
+
         int curslot = 0;
         for (int i = 0; i < files.length; i++) {
             String filename = files[i];
@@ -118,7 +121,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
             Log.i(TAG, "prefix " + prefix + " dt " + dt);
             if (prefix.equals("locations") && dt.length() == 8) {
                 Log.i(TAG, "files: " + prefix + " " + dt);
-                choices.add(dt);
+                file_list.add(dt);
 
                 if (selected_dt.equals(dt))
                     selected_slot = curslot;
@@ -126,22 +129,24 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
                 curslot++;
             }
         }
-        Log.i (TAG, "selected_slot " + selected_slot);
+        Log.i(TAG, "selected_slot " + selected_slot);
 
-        String[] choices_arr = new String[choices.size()];
-        choices_arr = choices.toArray(choices_arr);
-        Log.i(TAG, "nchoices = " + choices_arr.length);
-        for (String s : choices_arr)
+        Collections.sort(file_list);
+
+        file_list_arr = new String[file_list.size()];
+        file_list_arr = file_list.toArray(file_list_arr);
+        Log.i(TAG, "nfile_list = " + file_list_arr.length);
+        for (String s : file_list_arr)
             Log.i(TAG, s);
 
         day_listview = (ListView) findViewById(R.id.day_listview);
 
         ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
-                android.R.layout.simple_list_item_activated_1, android.R.id.text1, choices_arr);
+                android.R.layout.simple_list_item_activated_1, android.R.id.text1, file_list_arr);
 
         day_listview.setAdapter(adapter);
         if (selected_slot >= 0)
-            day_listview.setItemChecked (selected_slot, true);
+            day_listview.setItemChecked(selected_slot, true);
 
         day_listview.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
@@ -155,82 +160,84 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         });
     }
 
-    public void to_map (View view) {
+    public void to_map(View view) {
         if (selected_dt == null) {
-            Log.i (TAG, "no date selected");
+            Log.i(TAG, "no date selected");
             return;
         }
-        Log.i (TAG, "show map for " + selected_dt);
+        Log.i(TAG, "show map for " + selected_dt);
         Intent intent = new Intent(this, MapsActivity.class);
         startActivity(intent);
-	}
-
-    public void send_toast (String text) {
-		Context context = getApplicationContext ();
-		int duration = Toast.LENGTH_SHORT;
-		Toast toast = Toast.makeText (context, text, duration);
-		toast.show();
     }
 
-    public void start_click (View view) {
+    public void send_toast(String text) {
+        Context context = getApplicationContext();
+        int duration = Toast.LENGTH_SHORT;
+        Toast toast = Toast.makeText(context, text, duration);
+        toast.show();
+    }
+
+    public void start_click(View view) {
         Log.i(TAG, "start_click");
-        Intent intent = new Intent (this, DataProcess.class);
+        Intent intent = new Intent(this, DataProcess.class);
         startService(intent);
     }
 
-    public void stop_button_click (View view) {
+    public void stop_button_click(View view) {
         Log.i(TAG, "stop click");
-        Intent intent = new Intent (this, DataProcess.class);
+        Intent intent = new Intent(this, DataProcess.class);
         stopService(intent);
 
     }
 
-    public void hi_precision_click (View view) {
-        CheckBox cb = (CheckBox)findViewById (R.id.hi_precision_checkbox);
+    public void hi_precision_click(View view) {
+        CheckBox cb = (CheckBox) findViewById(R.id.hi_precision_checkbox);
         boolean val = cb.isChecked();
         Log.i(TAG, "hi precision click " + val);
 
-        Intent intent = new Intent (this, DataProcess.class);
+        Intent intent = new Intent(this, DataProcess.class);
         intent.setAction(val ? "hi_precision" : "lo_precision");
         startService(intent);
     }
 
-    public void sync_button_click (View view) {
+    public void sync_button_click(View view) {
         Log.i(TAG, "sync files");
-        new Thread (new Runnable () {
-            public void run () {
-                do_sync ();
+        make_file_list();
+        new Thread(new Runnable() {
+            public void run() {
+                do_sync();
             }
         }).start();
     }
 
-    void delete_folder (DriveId folder_id) {
+    void delete_folder(DriveId folder_id) {
         DriveFolder folder = folder_id.asDriveFolder();
-        Status val = folder.delete (mGoogleApiClient).await();
+        Status val = folder.delete(mGoogleApiClient).await();
         Log.i(TAG, "delete status " + val);
 
     }
-    void create_letrack_folder () {
+
+    void create_letrack_folder() {
         DriveFolder root = Drive.DriveApi.getRootFolder(mGoogleApiClient);
         MetadataChangeSet cs = new MetadataChangeSet.Builder()
                 .setTitle("LEtrack").build();
         DriveFolder.DriveFolderResult val = root.createFolder(mGoogleApiClient, cs).await();
-        Log.i (TAG, "create LEtrack folder result: " + val);
+        Log.i(TAG, "create LEtrack folder result: " + val);
     }
 
-    DriveId get_letrack_folder () {
+    DriveId get_letrack_folder() {
         DriveFolder root = Drive.DriveApi.getRootFolder(mGoogleApiClient);
         Log.i(TAG, "root = " + root);
         Query query = new Query.Builder()
-                .addFilter(Filters.and (
+                .addFilter(Filters.and(
                         Filters.eq(SearchableField.TITLE, "LEtrack"),
                         Filters.eq(SearchableField.TRASHED, false)))
                 .build();
 
         DriveApi.MetadataBufferResult result
                 = root.queryChildren(mGoogleApiClient, query).await();
-        if (! result.getStatus().isSuccess()) {
-            Log.i(TAG, "error looking up LEtrack foler");
+        if (!result.getStatus().isSuccess()) {
+            Log.i(TAG, "error looking up LEtrack folder");
             return (null);
         }
         MetadataBuffer mbuf = result.getMetadataBuffer();
@@ -242,7 +249,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         }
         for (int i = 0; i < mbuf.getCount(); i++) {
             Metadata md = mbuf.get(i);
-            Log.i (TAG, "file" + i + " " + md.getTitle ()
+            Log.i(TAG, "file" + i + " " + md.getTitle()
                     + " trashed " + md.isTrashed()
                     + " dt " + md.getModifiedDate() + " id " + md.getDriveId());
         }
@@ -259,10 +266,67 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         return (letrack_id);
     }
 
+    void write_file(DriveFolder folder, String filename, byte[] buf) {
+        MetadataChangeSet md = new MetadataChangeSet.Builder()
+                .setTitle(filename)
+                .setMimeType("application/csv").build();
+
+        DriveContents contents = Drive.DriveApi.newDriveContents(mGoogleApiClient)
+                .await()
+                .getDriveContents();
+
+        try {
+            OutputStream outf = contents.getOutputStream();
+            outf.write(buf);
+            outf.close();
+        } catch (Exception e) {
+        }
+
+        DriveFolder.DriveFileResult res = folder.createFile(mGoogleApiClient,
+                md, contents).await();
+        Log.i(TAG, "file create result = " + res);
+        Log.i(TAG, "status " + res.getStatus());
+    }
+
+    void copy_out_file (String dt, DriveFolder folder) {
+        try {
+            String inname = "locations" + dt;
+            String outname = "LEtrack" + dt;
+
+            FileInputStream inf = openFileInput(inname);
+
+            MetadataChangeSet md = new MetadataChangeSet.Builder()
+                    .setTitle(outname)
+                    .setMimeType("text/plain").build();
+
+            DriveContents contents = Drive.DriveApi.newDriveContents(mGoogleApiClient)
+                    .await()
+                    .getDriveContents();
+            OutputStream outf = contents.getOutputStream();
+
+            byte[] buf = new byte[10240];
+            int n;
+            while ((n = inf.read (buf, 0, buf.length)) > 0) {
+                outf.write (buf, 0, n);
+            }
+            inf.close ();
+            outf.close();
+
+            DriveFolder.DriveFileResult res = folder.createFile(mGoogleApiClient,
+                    md, contents).await();
+            Log.i(TAG, "file create result = " + res);
+            Log.i(TAG, "status " + res.getStatus());
+
+        } catch (Exception e) {
+            Log.i (TAG, "file write error");
+        }
+    }
+
     void do_sync () {
         Log.i(TAG, "doing sync");
         DriveId letrack_folder_id = get_letrack_folder();
         if (letrack_folder_id == null) {
+            Log.i (TAG, "try creating LEtrack folder");
             create_letrack_folder ();
             if ((letrack_folder_id = get_letrack_folder()) == null) {
                 Log.i(TAG, "can't make LEtrack folder");
@@ -273,26 +337,18 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
 
         DriveFolder letrack_folder = letrack_folder_id.asDriveFolder();
         Log.i(TAG, "folder " + letrack_folder);
-
-        MetadataChangeSet md = new MetadataChangeSet.Builder()
-                .setTitle ("hello.csv")
-                .setMimeType("application/csv").build();
-
-        DriveApi.DriveContentsResult xcontents = Drive.DriveApi.newDriveContents(mGoogleApiClient)
-                .await();
-        DriveContents contents = xcontents.getDriveContents();
-
-        try {
-            OutputStream outf = contents.getOutputStream();
-            outf.write("hello\n".getBytes("UTF-8"));
-            outf.close ();
-        } catch (Exception e) {
+        Log.i(TAG, "file_list_arr = " + file_list_arr);
+        for (int i = 0; i < file_list_arr.length; i++) {
+            Log.i (TAG, "sync file " + file_list_arr[i]);
+            copy_out_file (file_list_arr[i], letrack_folder);
         }
-        DriveFolder.DriveFileResult res = letrack_folder.createFile(mGoogleApiClient,
-                md, contents).await();
-        Log.i(TAG, "file create result = " + res);
-        Log.i(TAG, "status " + res.getStatus());
-
+/*
+        try {
+            write_file(letrack_folder, "hello2.csv", "abc".getBytes("UTF-8"));
+        } catch (Exception e) {
+            Log.i (TAG, "error writing hello2.csv");
+        }
+*/
 
     }
 

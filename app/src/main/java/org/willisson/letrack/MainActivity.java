@@ -11,6 +11,7 @@ import com.google.android.gms.common.api.Status;
 import com.google.android.gms.drive.Drive;
 import com.google.android.gms.drive.DriveApi;
 import com.google.android.gms.drive.DriveContents;
+import com.google.android.gms.drive.DriveFile;
 import com.google.android.gms.drive.DriveFolder;
 import com.google.android.gms.drive.DriveId;
 import com.google.android.gms.drive.Metadata;
@@ -225,22 +226,23 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         Log.i(TAG, "create LEtrack folder result: " + val);
     }
 
-    DriveId get_letrack_folder() {
-        DriveFolder root = Drive.DriveApi.getRootFolder(mGoogleApiClient);
-        Log.i(TAG, "root = " + root);
+    MetadataBuffer find_files (DriveFolder folder, String filename) {
         Query query = new Query.Builder()
                 .addFilter(Filters.and(
-                        Filters.eq(SearchableField.TITLE, "LEtrack"),
+                        Filters.eq(SearchableField.TITLE, filename),
                         Filters.eq(SearchableField.TRASHED, false)))
                 .build();
-
         DriveApi.MetadataBufferResult result
-                = root.queryChildren(mGoogleApiClient, query).await();
-        if (!result.getStatus().isSuccess()) {
-            Log.i(TAG, "error looking up LEtrack folder");
+                = folder.queryChildren(mGoogleApiClient, query).await();
+        if (! result.getStatus().isSuccess())
             return (null);
-        }
-        MetadataBuffer mbuf = result.getMetadataBuffer();
+        return (result.getMetadataBuffer());
+    }
+
+    DriveId get_letrack_folder() {
+        DriveFolder root = Drive.DriveApi.getRootFolder(mGoogleApiClient);
+        MetadataBuffer mbuf = find_files(root, "LEtrack");
+
         Log.i(TAG, "result " + mbuf);
         Log.i(TAG, "lookup count " + mbuf.getCount());
         if (mbuf.getCount() == 0) {
@@ -339,16 +341,44 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         Log.i(TAG, "folder " + letrack_folder);
         Log.i(TAG, "file_list_arr = " + file_list_arr);
         for (int i = 0; i < file_list_arr.length; i++) {
-            Log.i (TAG, "sync file " + file_list_arr[i]);
-            copy_out_file (file_list_arr[i], letrack_folder);
+            try {
+                String dt = file_list_arr[i];
+                Log.i(TAG, "sync file " + dt);
+
+                String l_filename = "locations" + dt;
+
+                FileInputStream fin = openFileInput(l_filename);
+                int local_byte_count = fin.available();
+                Log.i(TAG, "... local byte count " + local_byte_count);
+                fin.close();
+
+                String d_filename = "LEtrack" + dt;
+                MetadataBuffer mbuf = find_files(letrack_folder, d_filename);
+                if (mbuf.getCount() == 0) {
+                    copy_out_file(d_filename, letrack_folder);
+                } else if (mbuf.getCount() == 1) {
+                    Metadata md = mbuf.get(0);
+                    long drive_byte_count = md.getFileSize();
+                    if (local_byte_count == drive_byte_count) {
+                        Log.i (TAG, "... byte counts match, nothing to do");
+                    } else {
+                        Log.i(TAG, "... update on drive");
+                    }
+                } else {
+                    for (int j = 1; j < mbuf.getCount(); j++) {
+                        Log.i (TAG, "... deleting extra file");
+                        Metadata md = mbuf.get(j);
+                        DriveFile df = md.getDriveId().asDriveFile();
+                        Status val = df.delete(mGoogleApiClient).await();
+
+                        Log.i(TAG, "... drive byte count " + md.getFileSize());
+                    }
+                }
+                mbuf.release();
+            } catch (Exception e) {
+                Log.i (TAG, "error");
+            }
         }
-/*
-        try {
-            write_file(letrack_folder, "hello2.csv", "abc".getBytes("UTF-8"));
-        } catch (Exception e) {
-            Log.i (TAG, "error writing hello2.csv");
-        }
-*/
 
     }
 

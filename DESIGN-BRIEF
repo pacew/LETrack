@@ -1,0 +1,43 @@
+* Summary:
+
+This project is to design the graphical elements of a simple Android application.  Apple/iOS support is NOT needed.  A total of 5 images need to be delivered.
+
+The design should generally conform to the Google guidelines at https://www.google.com/design/spec/material-design/introduction.html and https://www.google.com/design/spec/style/icons.html
+
+* Deliverables:
+
+1. Android Launcher Icon: color PNG 48x48 and 512x512
+
+2. A custom Google Map Marker: PNG 32x32 with transparent background
+
+3. Android Notification Icon: PNG 48x48 and 96x96, monochrome (black & white) with white pixels and transparent background.  It will normally be shown over a dark background.
+
+4. Choice of a primary and secondary (accent) color palette for user interface and associated webpage.
+
+* Application functionality:
+
+The function of the application is to automatically record the phone's location every minute during the day and display it to the user on a map.  It's different from other tracking applications because it is designed to conserve battery power by using the low resolution location information (instead of full GPS).  Users will be able to run it all the time without worrying about running out the battery.  Users might look at the map for the current day to remember where the car is parked.  Last week's map might be useful when filling out a timesheet showing which clients were visited on different days.
+
+* Details for each deliverable:
+
+1. Launcher Icon: One concept for the launcher icon might emphasize the idea of a parked car.  Another might echo the idea of a Google Map with the track drawn over it.  The launcher icon might incorporate a representation of the custom Google Map Marker.
+
+2. Marker Icon: The custom Google Map Marker will be used in place of the standard red Google Map pushpin when highlighting points along the day's path.
+
+3. Notification Icon: The notification icon should remind the user of the custom Google Map Marker, but it doesn't need to be exactly the same.
+
+4. Color palettes: The color palettes should be chosen from the choices at https://www.google.com/design/spec/style/color.html#color-color-palette except the pallets "Indigo", "Blue", "Light Blue", or "Green" should not be used.
+
+We will use these colors in the implementation of the app user interface and when we build the associated web site.  The palettes should be related to the other graphical elements (for example, the Google Map Marker should be an accent color).
+
+* Project structure:
+
+The project will have 2 parts, with 33% of the total fee paid at the
+end of part 1 as a milestone.
+
+Part 1 (33% of total fee): Deliver 3 concepts, each showing the Launcher Icon at 48x48 and the custom pin at 32x32.
+
+We'll return comments within 48 hours and also release the payment on the first milestone.  Then you can proceed to create the final elements based on our feedback and your best judgment.
+
+Part 2: Deliver all elements and sizes specified above; project complete and we will release the final payment.
+

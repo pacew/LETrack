@@ -20,10 +20,9 @@
         android:layout_height="wrap_content"
         android:text="Map"
         android:id="@+id/button"
-        android:layout_below="@+id/textView"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="50dp"
-        android:onClick="to_map" />
+        android:onClick="to_map"
+        android:layout_below="@+id/start_button"
+        android:layout_toStartOf="@+id/stop_button" />
 
     <Button
         android:layout_width="wrap_content"
@@ -60,5 +59,14 @@
         android:layout_below="@+id/textView"
         android:layout_toEndOf="@+id/stop_button"
         android:onClick="hi_precision_click" />
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Sync files"
+        android:id="@+id/sync_button"
+        android:layout_below="@+id/stop_button"
+        android:layout_toEndOf="@+id/button"
+        android:onClick="sync_button_click" />
 
 </RelativeLayout>

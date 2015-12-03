@@ -1,10 +1,25 @@
 package org.willisson.letrack;
 
 import android.content.Intent;
+import android.content.IntentSender;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.common.api.Status;
+import com.google.android.gms.drive.Drive;
+import com.google.android.gms.drive.DriveApi;
+import com.google.android.gms.drive.DriveContents;
+import com.google.android.gms.drive.DriveFolder;
+import com.google.android.gms.drive.DriveId;
+import com.google.android.gms.drive.Metadata;
+import com.google.android.gms.drive.MetadataBuffer;
+import com.google.android.gms.drive.MetadataChangeSet;
+import com.google.android.gms.drive.query.Filters;
+import com.google.android.gms.drive.query.Query;
+import com.google.android.gms.drive.query.SearchableField;
+
 import android.content.Context;
 import android.view.View;
 import android.widget.AdapterView;
@@ -22,14 +37,17 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
     public final String TAG = "LEtrack";
     public static String selected_dt;
+
+    GoogleApiClient mGoogleApiClient;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -43,6 +61,7 @@ public class MainActivity extends AppCompatActivity {
         }
 
 
+
     }
 
     @Override
@@ -51,6 +70,30 @@ public class MainActivity extends AppCompatActivity {
         Log.i(TAG, "mainactivity start");
 
         make_file_list();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (mGoogleApiClient == null) {
+            mGoogleApiClient = new GoogleApiClient.Builder(this)
+                    .addApi(Drive.API)
+                    .addScope(Drive.SCOPE_FILE)
+                    .addConnectionCallbacks(this)
+                    .addOnConnectionFailedListener(this)
+                    .build();
+
+        }
+        Log.i (TAG, "connecting google api client");
+		mGoogleApiClient.connect();
+    }
+
+    @Override
+    protected void onPause() {
+        if (mGoogleApiClient != null) {
+            mGoogleApiClient.disconnect();
+        }
+        super.onPause();
     }
 
     ListView day_listview;
@@ -132,7 +175,7 @@ public class MainActivity extends AppCompatActivity {
     public void start_click (View view) {
         Log.i(TAG, "start_click");
         Intent intent = new Intent (this, DataProcess.class);
-        startService (intent);
+        startService(intent);
     }
 
     public void stop_button_click (View view) {
@@ -145,10 +188,151 @@ public class MainActivity extends AppCompatActivity {
     public void hi_precision_click (View view) {
         CheckBox cb = (CheckBox)findViewById (R.id.hi_precision_checkbox);
         boolean val = cb.isChecked();
-        Log.i (TAG, "hi precision click " + val);
+        Log.i(TAG, "hi precision click " + val);
 
         Intent intent = new Intent (this, DataProcess.class);
         intent.setAction(val ? "hi_precision" : "lo_precision");
         startService(intent);
+    }
+
+    public void sync_button_click (View view) {
+        Log.i(TAG, "sync files");
+        new Thread (new Runnable () {
+            public void run () {
+                do_sync ();
+            }
+        }).start();
+    }
+
+    void delete_folder (DriveId folder_id) {
+        DriveFolder folder = folder_id.asDriveFolder();
+        Status val = folder.delete (mGoogleApiClient).await();
+        Log.i(TAG, "delete status " + val);
+
+    }
+    void create_letrack_folder () {
+        DriveFolder root = Drive.DriveApi.getRootFolder(mGoogleApiClient);
+        MetadataChangeSet cs = new MetadataChangeSet.Builder()
+                .setTitle("LEtrack").build();
+        DriveFolder.DriveFolderResult val = root.createFolder(mGoogleApiClient, cs).await();
+        Log.i (TAG, "create LEtrack folder result: " + val);
+    }
+
+    DriveId get_letrack_folder () {
+        DriveFolder root = Drive.DriveApi.getRootFolder(mGoogleApiClient);
+        Log.i(TAG, "root = " + root);
+        Query query = new Query.Builder()
+                .addFilter(Filters.and (
+                        Filters.eq(SearchableField.TITLE, "LEtrack"),
+                        Filters.eq(SearchableField.TRASHED, false)))
+                .build();
+
+        DriveApi.MetadataBufferResult result
+                = root.queryChildren(mGoogleApiClient, query).await();
+        if (! result.getStatus().isSuccess()) {
+            Log.i(TAG, "error looking up LEtrack foler");
+            return (null);
+        }
+        MetadataBuffer mbuf = result.getMetadataBuffer();
+        Log.i(TAG, "result " + mbuf);
+        Log.i(TAG, "lookup count " + mbuf.getCount());
+        if (mbuf.getCount() == 0) {
+            Log.i(TAG, "not found");
+            return (null);
+        }
+        for (int i = 0; i < mbuf.getCount(); i++) {
+            Metadata md = mbuf.get(i);
+            Log.i (TAG, "file" + i + " " + md.getTitle ()
+                    + " trashed " + md.isTrashed()
+                    + " dt " + md.getModifiedDate() + " id " + md.getDriveId());
+        }
+
+        Metadata md = mbuf.get(0);
+        Log.i(TAG, "md = " + md);
+        Log.i(TAG, "title = " + md.getTitle());
+        DriveId letrack_id = md.getDriveId();
+        Log.i(TAG, "driveid = " + letrack_id);
+        Log.i(TAG, "enc " + letrack_id.encodeToString());
+
+        mbuf.release();
+
+        return (letrack_id);
+    }
+
+    void do_sync () {
+        Log.i(TAG, "doing sync");
+        DriveId letrack_folder_id = get_letrack_folder();
+        if (letrack_folder_id == null) {
+            create_letrack_folder ();
+            if ((letrack_folder_id = get_letrack_folder()) == null) {
+                Log.i(TAG, "can't make LEtrack folder");
+                return;
+            }
+        }
+        Log.i(TAG, "letrack folder = " + letrack_folder_id);
+
+        DriveFolder letrack_folder = letrack_folder_id.asDriveFolder();
+        Log.i(TAG, "folder " + letrack_folder);
+
+        MetadataChangeSet md = new MetadataChangeSet.Builder()
+                .setTitle ("hello.csv")
+                .setMimeType("application/csv").build();
+
+        DriveApi.DriveContentsResult xcontents = Drive.DriveApi.newDriveContents(mGoogleApiClient)
+                .await();
+        DriveContents contents = xcontents.getDriveContents();
+
+        try {
+            OutputStream outf = contents.getOutputStream();
+            outf.write("hello\n".getBytes("UTF-8"));
+            outf.close ();
+        } catch (Exception e) {
+        }
+        DriveFolder.DriveFileResult res = letrack_folder.createFile(mGoogleApiClient,
+                md, contents).await();
+        Log.i(TAG, "file create result = " + res);
+        Log.i(TAG, "status " + res.getStatus());
+
+
+    }
+
+
+    @Override
+    public void onConnected(Bundle bundle) {
+        Log.i(TAG, "google api connected");
+
+    }
+
+    @Override
+    public void onConnectionSuspended(int i) {
+        Log.i(TAG, "google api connection suspended");
+
+    }
+
+    @Override
+    public void onConnectionFailed(ConnectionResult result) {
+        // Called whenever the API client fails to connect.
+        Log.i(TAG, "GoogleApiClient connection failed: " + result.toString());
+        if (!result.hasResolution()) {
+            Log.i(TAG, "noresolution path");
+            // show the localized error dialog.
+            GoogleApiAvailability.getInstance().getErrorDialog(this, result.getErrorCode(), 0).show();
+            return;
+        }
+        // The failure has a resolution. Resolve it.
+        // Called typically when the app is not yet authorized, and an
+        // authorization
+        // dialog is displayed to the user.
+        try {
+            Log.i(TAG, "calling startresolution 123");
+            result.startResolutionForResult(this, 123 );
+        } catch (IntentSender.SendIntentException e) {
+            Log.e(TAG, "Exception while starting resolution activity", e);
+        }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        Log.i (TAG, "onActivityResult " + resultCode + " " + data);
     }
 }
